@@ -39,8 +39,8 @@ def off() {
 }
 
 def sendData(String value) {
-    def deviceNumber = device.deviceNetworkId.split("-")[-1]
-    parent.sendData("${deviceNumber}, ${value}")  
+    def String deviceNumber = device.deviceNetworkId.split("-")[-1]
+    parent.sendData("$deviceNumber/$value")  
 }
 
 def parse(String description) {

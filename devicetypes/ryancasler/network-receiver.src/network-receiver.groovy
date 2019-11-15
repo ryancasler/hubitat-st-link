@@ -8,9 +8,11 @@ import groovy.json.JsonSlurper
  
 metadata {
 	definition (name: "network_receiver", namespace: "ryancasler", author: "Ryan Casler") {
-        capability "Configuration"        
-       command "sendData", ["string","string","string"]
-	}
+        capability "Configuration" 
+        capability "Refresh"
+        command "sendData", ["string","string","string"]
+        attribute "lastUpdated", "String"
+}
 
     simulator {
     }
@@ -25,6 +27,12 @@ metadata {
 
 	// Tile Definitions
 	tiles (scale: 2){
+    	valueTile("update", "device.lastUpdated", width: 6, height: 1){
+        	state "default", label:'Last updated ${currentValue}',icon: "st.Health & Wellness.health9"
+        }
+		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "refresh", label:'Refresh', action:"refresh.refresh", icon:"st.secondary.tools"
+		}
 		standardTile("configure", "device.configure", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "configure", label:'Configure', action:"configuration.configure", icon:"st.secondary.tools"
 		}
@@ -34,7 +42,9 @@ metadata {
 
 // parse events into attributes
 def parse(String description) {
-	def msg = parseLanMessage(description)
+	log.debug (description)
+    def msg = parseLanMessage(description)
+    log.debug msg
     def slurper = new JsonSlurper()
 	msg = slurper.parseText(msg.body)
     log.debug msg
@@ -79,6 +89,9 @@ def parse(String description) {
         	log.error "Error in parse() routine, error = ${e}"
         }
 	}
+    def nowDay = new Date().format("MMM dd", location.timeZone)
+    def nowTime = new Date().format("h:mm a", location.timeZone)
+    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }
 
 // handle commands
@@ -105,7 +118,6 @@ def updateDeviceNetworkID() {
 	}
     //Need deviceNetworkID updated BEFORE we can create Child Devices
 	//Have the Arduino send an updated value for every device attached.  This will auto-created child devices!
-	refresh()
 }
 
 
@@ -145,7 +157,7 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
                 		deviceHandlerName = "Child Carbon Monoxide Detector" 
                 	break    
          		case "presence": 
-                		deviceHandlerName = "Child Button" 
+                		deviceHandlerName = "Child Presence Sensor" 
                 	break
          		case "pushed": 
                 		deviceHandlerName = "Child Button" 
@@ -170,38 +182,31 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
     	}
 }
 
-def sendEthernet(message) {
-	log.debug "Executing 'sendEthernet' ${message}"
-	if (settings.ip != null && settings.port != null) {
-        sendHubCommand(new physicalgraph.device.HubAction(
-            method: "POST",
-            path: "/${message}?",
-            headers: [ HOST: "${getHostAddress()}" ]
-        ))
-    }
-    else {
-        state.alertMessage = "ST_Anything Parent Device has not yet been fully configured. Click the 'Gear' icon, enter data for all fields, and click 'Done'"
-        runIn(2, "sendAlert")   
-    }
-}
 
-def sendData(deviceNumber, command) {
+def sendData(String value) {
     if (settings.ip != null) {
         sendHubCommand(new physicalgraph.device.HubAction(
             method: "GET",
-            path: "/apps/api/56/devices/&deviceNumber/$command?access_token=1067c8a2-1495-4c9c-aba6-1597752b7963",
-            headers: [ HOST: "${getHostAddress()}" ]
+            path: "/apps/api/56/devices/$value?access_token=1067c8a2-1495-4c9c-aba6-1597752b7963",
+            headers: [ HOST: "$ip:80" ]
         ))
     } 
 }
 
-def sendDataParam(deviceNumber, command, parameter) {
+
+def refresh(){
 	def app = settings.makerApp
-    if (settings.ip != null) {
-        sendHubCommand(new physicalgraph.device.HubAction(
-            method: "GET",
-            path: "/apps/api/$app/devices/$deviceNumber/$command/$parameter?access_token=$token",
-            headers: [ HOST: "$settings.ip" ]
-        ))
-    } 
+    def request = new physicalgraph.device.HubAction(
+    	method: "GET",
+        path: "/apps/api/$app/devices?access_token=$token",
+        headers: [ 
+        	HOST: "$ip:80"
+        ])
+	sendHubCommand(request)
+    log.debug "Request sent"
+    /*        def msg = .data.text
+        log.debug msg
+		def data = new groovy.json.JsonSlurper().parseText(msg)
+        log.debug data
+*/
 }
