@@ -27,8 +27,8 @@ metadata {
 
 	// Tile Definitions
 	tiles (scale: 2){
-    	valueTile("update", "device.lastUpdated", width: 6, height: 1){
-        	state "default", label:'Last updated ${currentValue}',icon: "st.Health & Wellness.health9"
+ 		valueTile("update", "device.lastUpdated", decoration: "flat", width: 6, height: 1) {
+            state "default", label:'Last Updated: ${currentValue}'
         }
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "refresh", label:'Refresh', action:"refresh.refresh", icon:"st.secondary.tools"
@@ -37,17 +37,18 @@ metadata {
 			state "configure", label:'Configure', action:"configuration.configure", icon:"st.secondary.tools"
 		}
 		childDeviceTiles("all")
+        
 	}
 }
 
 // parse events into attributes
 def parse(String description) {
-	log.debug (description)
     def msg = parseLanMessage(description)
+//    def slurper = new JsonSlurper()
+//	msg = slurper.parseText(msg.body)
+	msg = msg.data
     log.debug msg
-    def slurper = new JsonSlurper()
-	msg = slurper.parseText(msg.body)
-    log.debug msg
+    if(msg.content){
 	def deviceNumber = msg.content.deviceId
     def command = msg.content.name
     def value = msg.content.value
@@ -88,11 +89,13 @@ def parse(String description) {
 		} catch (e) {
         	log.error "Error in parse() routine, error = ${e}"
         }
+    }
 	}
     def nowDay = new Date().format("MMM dd", location.timeZone)
     def nowTime = new Date().format("h:mm a", location.timeZone)
     sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
 }
+
 
 // handle commands
 def configure() {
@@ -194,7 +197,7 @@ def sendData(String value) {
 }
 
 
-def refresh(){
+/*def refresh(){
 	def app = settings.makerApp
     def request = new physicalgraph.device.HubAction(
     	method: "GET",
@@ -208,5 +211,5 @@ def refresh(){
         log.debug msg
 		def data = new groovy.json.JsonSlurper().parseText(msg)
         log.debug data
-*/
 }
+*/
