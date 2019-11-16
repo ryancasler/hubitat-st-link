@@ -101,6 +101,8 @@ def parse(String description) {
 def configure() {
 	log.debug "Executing 'configure()'"
     updateDeviceNetworkID()
+    state.app = settings.app
+    state.token = settings.token
 }
 
 
@@ -191,7 +193,7 @@ def sendData(String value) {
     if (settings.ip != null) {
         sendHubCommand(new physicalgraph.device.HubAction(
             method: "GET",
-            path: "/apps/api/$app/devices/$value?access_token=$token",
+            path: "/apps/api/$state.app/devices/$value?access_token=$state.token",
             headers: [ HOST: "$ip:80" ]
         ))
     } 

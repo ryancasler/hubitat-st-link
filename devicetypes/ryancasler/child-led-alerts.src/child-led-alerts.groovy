@@ -4,7 +4,7 @@
  * 
  */
 metadata {
-    definition(name: "Child Led Alerts", namespace: "ryancasler", author: "Ryan Casler") {
+    definition(name: "Child Led Alerts", namespace: "ryancasler", author: "Ryan Casler", mnmn: "SmartThings", vid: "generic-switch") {
         capability "Actuator"
         capability "Switch"
         capability "Sensor"
@@ -15,6 +15,41 @@ metadata {
 		command "orange"
 		command "yellow"
     }
+    simulator {
+
+	}
+
+	tiles(scale: 2) {
+		multiAttributeTile(name:"switch", type: "lighting", width: 3, height: 4, canChangeIcon: true){
+			tileAttribute ("device.switch", key: "PRIMARY_CONTROL") {
+				attributeState "off", label: '${name}', action: "switch.on", icon: "st.switches.light.off", backgroundColor: "#ffffff", nextState:"turningOn"
+				attributeState "on", label: '${name}', action: "switch.off", icon: "st.switches.light.on", backgroundColor: "#00A0DC", nextState:"turningOff"
+				attributeState "turningOn", label:'${name}', action:"switch.off", icon:"st.switches.light.on", backgroundColor:"#00A0DC", nextState:"turningOff"
+				attributeState "turningOff", label:'${name}', action:"switch.on", icon:"st.switches.light.off", backgroundColor:"#ffffff", nextState:"turningOn"
+			}
+ 			tileAttribute("device.lastUpdated", key: "SECONDARY_CONTROL") {
+    				attributeState("default", label:'    Last updated ${currentValue}',icon: "st.Health & Wellness.health9")
+            }
+		}
+        standardTile("red", "device.red", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "red", label:'Red', action:"red",backgroundColor: "#ff0000"
+		}
+        standardTile("blue", "device.blue", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "blue", label:'Blue', action:"blue",backgroundColor: "#0000ff"
+		}
+        standardTile("green", "device.green", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "green", label:'Green', action:"green",backgroundColor: "#00ff00"
+		}
+        standardTile("purple", "device.purple", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "purple", label:'Purple', action:"purple",backgroundColor: "#ff00ff"
+		}
+        standardTile("orange", "device.orange", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "orange", label:'Orange', action:"orange",backgroundColor: "#ff4d00"
+		}
+        standardTile("yellow", "device.yellow", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
+			state "yellow", label:'Yellow', action:"yellow",backgroundColor: "#ffee00"
+		}
+	}
 }
 
 def initialize(){
@@ -76,4 +111,3 @@ def orange() {
 def yellow() {
     sendData("yellow")
 }
-
