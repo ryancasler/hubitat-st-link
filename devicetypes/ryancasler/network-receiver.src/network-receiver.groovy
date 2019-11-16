@@ -10,7 +10,7 @@ metadata {
 	definition (name: "network_receiver", namespace: "ryancasler", author: "Ryan Casler") {
         capability "Configuration" 
         capability "Refresh"
-        command "sendData", ["string","string","string"]
+        command "sendData", ["string"]
         attribute "lastUpdated", "String"
 }
 
@@ -21,7 +21,7 @@ metadata {
 	preferences {
 		input "ip", "text", title: "Hubitat IP Address", description: "IP Address in form 192.168.1.226", required: true, displayDuringSetup: true
 		input "mac", "text", title: "Hubitat MAC Addr", description: "MAC Address in form of 02A1B2C3D4E5", required: true, displayDuringSetup: true
-		input "makerApp", "text", title: "Maker App Number", description: "App number of the Maker API that appears between api and devices (leave out /)", required: true, displayDuringSetup: true
+		input "app", "text", title: "Maker App Number", description: "App number of the Maker API that appears between api and devices (leave out /)", required: true, displayDuringSetup: true
 		input "token", "text", title: "Hubitat Maker API Token", description: "Access Token for the Maker API that appears at the end of the URL", required: true, displayDuringSetup: true
 	}
 
@@ -138,7 +138,7 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
          		case "level": 
                 		deviceHandlerName = "Child Dimmer Switch" 
                 	break
-         		case "color": 
+/*         		case "color": 
                 		deviceHandlerName = "Child RGB Switch" 
                 	break
 				case "colorTemperature": 
@@ -146,9 +146,6 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
                 	break
          		case "temperature": 
                 		deviceHandlerName = "Child Temperature Sensor" 
-                	break
-         		case "motion": 
-                		deviceHandlerName = "Child Motion Sensor" 
                 	break
          		case "illuminance": 
                 		deviceHandlerName = "Child Illuminance Sensor" 
@@ -159,7 +156,10 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
          		case "carbonMonoxide": 
                 		deviceHandlerName = "Child Carbon Monoxide Detector" 
                 	break    
-         		case "presence": 
+*/         		case "motion": 
+                		deviceHandlerName = "Child Motion Sensor" 
+                	break
+                case "presence": 
                 		deviceHandlerName = "Child Presence Sensor" 
                 	break
          		case "pushed": 
@@ -174,6 +174,7 @@ private void createChildDevice(String deviceName, String deviceNumber, String ty
 			default: 
                 		log.error "No Child Device Handler case for ${type}"
       		}
+            log.debug("Creating device with: $deviceHandlerName")
             if (deviceHandlerName != "") {
          		addChildDevice(deviceHandlerName, "${device.deviceNetworkId}-${deviceNumber}", null,
          			[completedSetup: true, label: "${deviceName}", 
@@ -190,7 +191,7 @@ def sendData(String value) {
     if (settings.ip != null) {
         sendHubCommand(new physicalgraph.device.HubAction(
             method: "GET",
-            path: "/apps/api/56/devices/$value?access_token=1067c8a2-1495-4c9c-aba6-1597752b7963",
+            path: "/apps/api/$app/devices/$value?access_token=$token",
             headers: [ HOST: "$ip:80" ]
         ))
     } 
