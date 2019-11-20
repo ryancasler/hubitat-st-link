@@ -27,9 +27,6 @@ metadata {
 
 	// Tile Definitions
 	tiles (scale: 2){
- 		valueTile("update", "device.lastUpdated", decoration: "flat", width: 6, height: 1) {
-            state "default", label:'Last Updated: ${currentValue}'
-        }
 		standardTile("refresh", "device.refresh", inactiveLabel: false, decoration: "flat", width: 2, height: 2) {
 			state "refresh", label:'Refresh', action:"refresh.refresh", icon:"st.secondary.tools"
 		}
@@ -37,6 +34,10 @@ metadata {
 			state "configure", label:'Configure', action:"configuration.configure", icon:"st.secondary.tools"
 		}
 		childDeviceTiles("all")
+  		valueTile("lastUpdated", "device.lastUpdated", width:5, height: 1){
+        	state("lastUpdated", label: '${currentValue}')
+        }
+        main("lastUpdated")
         
 	}
 }
@@ -93,7 +94,7 @@ def parse(String description) {
 	}
     def nowDay = new Date().format("MMM dd", location.timeZone)
     def nowTime = new Date().format("h:mm a", location.timeZone)
-    sendEvent(name: "lastUpdated", value: nowDay + " at " + nowTime, displayed: false)
+    sendEvent(name: "lastUpdated", value: nowDay + " , " + nowTime, displayed: false)
 }
 
 
