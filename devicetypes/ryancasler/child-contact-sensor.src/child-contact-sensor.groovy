@@ -23,11 +23,11 @@ metadata {
 
 }
 
-def parse(String description) {
-    log.debug "parse(${description}) called"
-	def parts = description.split(" ")
-    def name  = parts.length>0?parts[0].trim():null
-    def value = parts.length>1?parts[1].trim():null
+def parse(name, value) {
+//    log.debug "parse(${description}) called"
+//	def parts = description.split(" ")
+//    def name  = parts.length>0?parts[0].trim():null
+//     def value = parts.length>1?parts[1].trim():null
     if (name && value) {
         // Update device
         sendEvent(name: name, value: value)
@@ -42,4 +42,8 @@ def parse(String description) {
 }
 
 def installed() {
+}
+
+def resendStatus(){
+	log.debug"Not resending, nothing to send."
 }

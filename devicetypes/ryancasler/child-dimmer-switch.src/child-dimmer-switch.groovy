@@ -53,25 +53,29 @@ def setLevel(value) {
 	log.debug "setLevel >> value: $value"
 	def valueaux = value as Integer
 	def level = Math.max(Math.min(valueaux, 99), 0)
-    sendData("${level}")
+    sendParam("${level}")
 //	if (level > 0) {
 //		sendEvent(name: "switch", value: "on")
 //	} else {
 //		sendEvent(name: "switch", value: "off")
 //	}
-	sendEvent(name: "level", value: level, unit: "%")
 }
 
 def sendData(String value) {
     def name = device.deviceNetworkId.split("-")[-1]
-    parent.sendData("${name} ${value}")  
+    parent.sendData(name, value)  
 }
 
-def parse(String description) {
-    log.debug "parse(${description}) called"
+def sendParam(level){
+    def name = device.deviceNetworkId.split("-")[-1]
+	parent.sendCmdParam(name, "setLevel", level)
+}
+
+def parse(name, value) {
+/*    log.debug "parse(${description}) called"
 	def parts = description.split(" ")
     def name  = parts.length>0?parts[0].trim():null
-    def value = parts.length>1?parts[1].trim():null
+    def value = parts.length>1?parts[1].trim():null*/
     if (name && value) {    // Update device
         if ((value == "on") || (value == "off")) {
             sendEvent(name: "switch", value: value)
@@ -91,4 +95,9 @@ def parse(String description) {
 }
 
 def installed() {
+}
+
+def resendStatus(){
+	def main = device.currentValue("switch")
+    def level = device.currentValue("level")
 }

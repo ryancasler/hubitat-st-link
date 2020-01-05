@@ -82,8 +82,10 @@ def off() {
 }
 
 def sendData(String value) {
-    def String deviceNumber = device.deviceNetworkId.split("-")[-1]
-    parent.sendData("$deviceNumber/$value")  
+    def name = device.deviceNetworkId.split("-")[-1]
+//    parent.sendData("$deviceNumber/$value")  
+	parent.sendCmdParam(name, "ledAlert", value)
+    log.debug"command sent for $value $name"
 }
 
 def red() {
@@ -111,3 +113,8 @@ def orange() {
 def yellow() {
     sendData("yellow")
 }
+
+def resendStatus(){
+	lof.debug"nothing to send"
+}
+

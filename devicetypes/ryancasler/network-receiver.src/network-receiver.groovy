@@ -49,52 +49,53 @@ def parse(String description) {
 //	msg = slurper.parseText(msg.body)
 	msg = msg.data
     log.debug msg
-    if(msg.content){
-	def deviceNumber = msg.content.deviceId
-    def command = msg.content.name
-    def value = msg.content.value
-    def deviceName = msg.content.displayName
-    def eventSend = true
-    if(command == "lastUpdate") eventSend = false
-    if(eventSend){
-    	def childDevice = null
-		try {
-            childDevices.each {
-				try{
-                	if (it.deviceNetworkId == "${device.deviceNetworkId}-${deviceNumber}") {
-                	childDevice = it
-                	}
-            	} catch (e) {
-            	}
-        	}            
-        	if (childDevice == null) {
-        		log.debug "no child found - Auto Add it!"            
-            	createChildDevice(deviceName, deviceNumber, command)
-            	//find child again, since it should now exist!
+    if(msg){
+    	def deviceName = msg.device
+	    def value = msg.value
+		def deviceNumber = msg.deviceId
+    	def command = msg.name
+   	    def eventSend = true
+  	    if(command == "lastUpdate") eventSend = false
+    	if(deviceNumber == null) eventSend = false
+	    if(eventSend){
+	    	def childDevice = null
+			try {
             	childDevices.each {
 					try{
-            			//log.debug "Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
                 		if (it.deviceNetworkId == "${device.deviceNetworkId}-${deviceNumber}") {
-                			childDevice = it
-                    		//log.debug "Found a match!!!"
+                		childDevice = it
                 		}
             		} catch (e) {
             		}
+        		}            
+        		if (childDevice == null) {
+        			log.debug "no child found - Auto Add it!"            
+            		createChildDevice(deviceName, deviceNumber, command)
+            	//find child again, since it should now exist!
+            		childDevices.each {
+						try{
+            			//log.debug "Looking for child with deviceNetworkID = ${device.deviceNetworkId}-${name} against ${it.deviceNetworkId}"
+                			if (it.deviceNetworkId == "${device.deviceNetworkId}-${deviceNumber}") {
+                				childDevice = it
+                    		//log.debug "Found a match!!!"
+                			}
+            			} catch (e) {
+            			}
+        			}
         		}
-        	}
-            if (childDevice != null) {
+            	if (childDevice != null) {
                 //log.debug "parse() found child device ${childDevice.deviceNetworkId}"
-                childDevice.parse("${command} ${value}")
-				log.debug "${childDevice.deviceNetworkId} - name: ${command}, value: ${value}"
-            }
-		} catch (e) {
-        	log.error "Error in parse() routine, error = ${e}"
-        }
-    }
+                	childDevice.parse(command, value)
+					log.debug "${childDevice.deviceNetworkId} - name: ${command}, value: ${value}"
+            	}
+			} catch (e) {
+        		log.error "Error in parse() routine, error = ${e}"
+        	}
+    	}
+    	def nowDay = new Date().format("MMM dd", location.timeZone)
+		def nowTime = new Date().format("h:mm a", location.timeZone)
+    	sendEvent(name: "lastUpdated", value: nowDay + " , " + nowTime, displayed: false)
 	}
-    def nowDay = new Date().format("MMM dd", location.timeZone)
-    def nowTime = new Date().format("h:mm a", location.timeZone)
-    sendEvent(name: "lastUpdated", value: nowDay + " , " + nowTime, displayed: false)
 }
 
 
@@ -201,19 +202,34 @@ def sendData(String value) {
 }
 
 
-/*def refresh(){
-	def app = settings.makerApp
-    def request = new physicalgraph.device.HubAction(
-    	method: "GET",
-        path: "/apps/api/$app/devices?access_token=$token",
-        headers: [ 
-        	HOST: "$ip:80"
-        ])
-	sendHubCommand(request)
-    log.debug "Request sent"
-    /*        def msg = .data.text
-        log.debug msg
-		def data = new groovy.json.JsonSlurper().parseText(msg)
-        log.debug data
+
+
+def refresh(){
+	def children = getChildDevices()
+    children.each{ child ->
+    	child.resendStatus()
+    }
 }
-*/
+
+
+def sendCommand(String device, String command) {
+	log.debug "Sending $command to $device"
+    if (settings.ip != null) {
+        sendHubCommand(new physicalgraph.device.HubAction(
+            method: "GET",
+            path: "/apps/api/$state.app/command?access_token=$state.token&device=$device&command=$command",
+            headers: [ HOST: "$ip:80" ]
+        ))
+    } 
+}
+
+def sendCmdParam(device, command, param) {
+	log.debug "Sending $command to $device"
+    if (settings.ip != null) {
+        sendHubCommand(new physicalgraph.device.HubAction(
+            method: "GET",
+            path: "/apps/api/$state.app/command?access_token=$state.token&device=$device&command=$command&param=$param",
+            headers: [ HOST: "$ip:80" ]
+        ))
+    } 
+}

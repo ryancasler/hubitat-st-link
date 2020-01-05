@@ -4,9 +4,11 @@ metadata {
 	definition (name: "Child Presence Sensor", namespace: "ryancasler", author: "Ryan Casler") {
 		capability "Sensor"
 		capability "Presence Sensor"
+        command "arrived"
+        command "departed"
+        command "toggle"
 
 		attribute "lastUpdated", "String"
-        attribute "level", "Number"
 	}
 
 	simulator {
@@ -32,32 +34,14 @@ metadata {
 	}
 }
 
-def parse(String description) {
-    log.debug "parse(${description}) called"
-	def parts = description.split(" ")
-    def name  = parts.length>0?parts[0].trim():null
-    def value = parts.length>1?parts[1].trim():null
+def parse(name, value) {
+//    log.debug "parse(${description}) called"
+//	def parts = description.split(" ")
+//    def name  = parts.length>0?parts[0].trim():null
+//    def value = parts.length>1?parts[1].trim():null
     if (name && value) {
-        if (value.isNumber()) {
-            sendEvent(name: "level", value: value)
-            if (presenceTriggerValue) {
-                log.debug "Presence received a numeric value. Perform comparison of value: ${Float.valueOf(value.trim())} versus presenceTriggerValue: ${presenceTriggerValue}"
-                if (Float.valueOf(value.trim()) >= presenceTriggerValue) {
-                    value = invertTriggerLogic?"not present":"present"
-                } 
-                else {
-                    value = invertTriggerLogic?"present":"not present"
-                }
-            }
-            else {
-                log.error "Please configure the Presence Trigger Value in device settings!"
-            }
-        }
-        else {
-            log.debug "Presence received a string.  value = ${value}"
-            if (value != "present") { value = "not present" }
-        }
         // Update device
+        if(value=="not_present"){value= "not present"}
         sendEvent(name: name, value: value)
         // Update lastUpdated date and time
         def nowDay = new Date().format("MMM dd", location.timeZone)
@@ -71,4 +55,26 @@ def parse(String description) {
 
 
 def installed() {
+}
+
+def arrived() {
+    sendData("present")
+}
+
+def departed() {
+    sendData("not present")
+}
+
+def sendData(String value) {
+    def String deviceNumber = device.deviceNetworkId.split("-")[-1]
+//    parent.sendData("$deviceNumber/$value")
+	parent.sendCmdParam(deviceNumber, "presence", value)
+}
+
+def toggle(){
+	if(device.currentValue("presence")=="present"){
+    	departed()
+    }else{
+    	arrived()
+    }
 }
